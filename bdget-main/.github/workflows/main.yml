@@ -1,0 +1,47 @@
+name: Build and Push Docker Image 
+
+on: 
+  push:
+    branches:
+      - main   
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso 1 checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Paso 2 configurar JDK
+    - mame: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    #Paso 3: Cache de dependencias de maven 
+    - name: Cache Maven dependencias
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2
+
+    #Paso 4: Contruir el proyecto y ejecutar tests
+    - name: Builod and test
+      run: mvn clean verify
+
+    #Paso 5: publicar reporte de cobertura de JaCoCo
+    - name: Upload JaCoCo report
+      uses: actions/upload-artifact@v3
+      with:
+        name: jacoco-report
+        path: target/site/jacoco
+      
+  
